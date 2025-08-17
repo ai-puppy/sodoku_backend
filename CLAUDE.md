@@ -174,3 +174,6 @@ Tests are organized by functionality:
 The FastAPI automatic documentation is available at:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+
+
+frontend code path: /Users/hw/Desktop/sodoku_frontend

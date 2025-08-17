@@ -17,8 +17,17 @@ from app.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Set the database URL from our settings
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# Set the database URL from environment variable or settings
+database_url = os.getenv("DATABASE_URL") or settings.database_url
+
+# Ensure SSL mode for Azure PostgreSQL connections in Alembic
+if "postgres.database.azure.com" in database_url and "sslmode=" not in database_url:
+    if "?" in database_url:
+        database_url += "&sslmode=require"
+    else:
+        database_url += "?sslmode=require"
+
+config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
