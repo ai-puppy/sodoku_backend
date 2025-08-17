@@ -221,6 +221,49 @@ class TestSudokuGeneratorInstance:
         assert sudoku_generator.is_complete(solution) is True
 
 
+class TestSudokuValidation:
+    """Test validation methods."""
+
+    @pytest.fixture
+    def generator(self):
+        """Create a SudokuGenerator instance."""
+        return SudokuGenerator()
+
+    def test_is_valid_board_with_valid_complete_board(
+        self, generator, sample_sudoku_solution
+    ):
+        """Test is_valid_board with a valid complete board."""
+        assert generator.is_valid_board(sample_sudoku_solution) is True
+
+    def test_is_valid_board_with_invalid_board(self, generator):
+        """Test is_valid_board with an invalid board."""
+        invalid_board = [
+            [1, 1, 3, 4, 5, 6, 7, 8, 9],  # Two 1s in first row
+            [4, 5, 6, 7, 8, 9, 1, 2, 3],
+            [7, 8, 9, 1, 2, 3, 4, 5, 6],
+            [2, 3, 4, 5, 6, 7, 8, 9, 1],
+            [5, 6, 7, 8, 9, 1, 2, 3, 4],
+            [8, 9, 1, 2, 3, 4, 5, 6, 7],
+            [3, 4, 5, 6, 7, 8, 9, 1, 2],
+            [6, 7, 8, 9, 1, 2, 3, 4, 5],
+            [9, 2, 2, 3, 4, 5, 6, 7, 8],
+        ]
+        assert generator.is_valid_board(invalid_board) is False
+
+    def test_generate_puzzle_is_solvable(self, generator):
+        """Test that generated puzzles are solvable."""
+        for difficulty in ["easy", "medium", "hard", "expert"]:
+            puzzle, solution = generator.generate_puzzle(difficulty)
+
+            # Test that puzzle can be solved
+            puzzle_copy = [row[:] for row in puzzle]
+            assert generator.solve_sudoku(puzzle_copy) is True
+
+            # Test that solution is complete and valid
+            assert generator.is_complete(solution) is True
+            assert generator.is_valid_board(solution) is True
+
+
 class TestSudokuEdgeCases:
     """Test edge cases and error conditions."""
 

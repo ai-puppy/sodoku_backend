@@ -9,16 +9,16 @@ class SudokuGenerator:
         self.box_size = 3
 
     def is_valid(self, board: List[List[int]], row: int, col: int, num: int) -> bool:
-        for x in range(9):
-            if board[row][x] == num or board[x][col] == num:
+        # Check row, column, and 3x3 box in one loop
+        for i in range(9):
+            # Check row and column
+            if board[row][i] == num or board[i][col] == num:
                 return False
-
-        start_row = row - row % 3
-        start_col = col - col % 3
-        for i in range(3):
-            for j in range(3):
-                if board[i + start_row][j + start_col] == num:
-                    return False
+            # Check 3x3 box
+            box_row = 3 * (row // 3) + i // 3
+            box_col = 3 * (col // 3) + i % 3
+            if board[box_row][box_col] == num:
+                return False
         return True
 
     def solve_sudoku(self, board: List[List[int]]) -> bool:
@@ -35,17 +35,30 @@ class SudokuGenerator:
         return True
 
     def generate_complete_sudoku(self) -> List[List[int]]:
+        """Generate a complete valid Sudoku board using randomized backtracking."""
         board = [[0 for _ in range(9)] for _ in range(9)]
 
-        for i in range(0, 9, 3):
-            nums = list(range(1, 10))
-            random.shuffle(nums)
-            for row in range(3):
-                for col in range(3):
-                    board[i + row][i + col] = nums[row * 3 + col]
-
-        self.solve_sudoku(board)
+        # Use randomized backtracking to generate a complete valid board
+        self._fill_board_randomly(board)
         return board
+
+    def _fill_board_randomly(self, board: List[List[int]]) -> bool:
+        """Fill the board using randomized backtracking."""
+        for i in range(9):
+            for j in range(9):
+                if board[i][j] == 0:
+                    # Create a randomized list of numbers to try
+                    numbers = list(range(1, 10))
+                    random.shuffle(numbers)
+
+                    for num in numbers:
+                        if self.is_valid(board, i, j, num):
+                            board[i][j] = num
+                            if self._fill_board_randomly(board):
+                                return True
+                            board[i][j] = 0
+                    return False
+        return True
 
     def remove_numbers(
         self, board: List[List[int]], difficulty: str
@@ -68,25 +81,31 @@ class SudokuGenerator:
     def generate_puzzle(
         self, difficulty: str = "medium"
     ) -> Tuple[List[List[int]], List[List[int]]]:
+        """Generate a valid Sudoku puzzle."""
+        # Generate a complete valid solution
         solution = self.generate_complete_sudoku()
+
+        # Create puzzle by removing numbers
         puzzle = self.remove_numbers(solution, difficulty)
+
+        # Verify puzzle is solvable
+        puzzle_copy = [row[:] for row in puzzle]
+        if not self.solve_sudoku(puzzle_copy):
+            # If puzzle is not solvable, try again
+            return self.generate_puzzle(difficulty)
+
         return puzzle, solution
 
     def is_complete(self, board: List[List[int]]) -> bool:
+        """Check if a board is completely filled and valid."""
+        # First check if all cells are filled
         for row in board:
             for cell in row:
                 if cell == 0:
                     return False
 
-        for i in range(9):
-            for j in range(9):
-                num = board[i][j]
-                board[i][j] = 0
-                if not self.is_valid(board, i, j, num):
-                    board[i][j] = num
-                    return False
-                board[i][j] = num
-        return True
+        # Then check if the board is valid
+        return self.is_valid_board(board)
 
     def validate_move(
         self, board: List[List[int]], row: int, col: int, num: int
@@ -96,6 +115,20 @@ class SudokuGenerator:
         if num < 1 or num > 9:
             return False
         return self.is_valid(board, row, col, num)
+
+    def is_valid_board(self, board: List[List[int]]) -> bool:
+        """Check if a board follows Sudoku rules (no conflicts)."""
+        for i in range(9):
+            for j in range(9):
+                if board[i][j] != 0:
+                    # Temporarily remove the number and check if it's valid to place
+                    num = board[i][j]
+                    board[i][j] = 0
+                    is_valid = self.is_valid(board, i, j, num)
+                    board[i][j] = num
+                    if not is_valid:
+                        return False
+        return True
 
 
 def board_to_json(board: List[List[int]]) -> str:
